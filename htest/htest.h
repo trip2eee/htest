@@ -1,3 +1,10 @@
+/**
+ * @file   htest.h
+ * @author Jongmin Park
+ * @date   20 Jan 2022
+ * @brief  Very simple C++ unit test library.
+*/
+
 #ifndef __HTEST_H__
 #define __HTEST_H__
 
@@ -8,25 +15,13 @@
 #include <cfloat>
 namespace htest
 {
-    class ITest{
-    public:
-        virtual void SetUp() = 0;
-        virtual void TearDown() = 0;
-        virtual void TestBody() = 0;
-        virtual void PrintResult() = 0;
-        virtual std::string GetTestCaseName() = 0;
-        virtual bool IsPassed() = 0;
-    };
-
-    std::vector<ITest*> g_oVectTest;
-
-    class Test : public ITest
+    class Test
     {
     public:
-        virtual void SetUp() override{}
-        virtual void TearDown() override{}
-        virtual void TestBody() override{}
-        virtual void PrintResult() override{
+        virtual void SetUp(){}
+        virtual void TearDown(){}
+        virtual void TestBody(){}
+        virtual void PrintResult(){
             if(m_bPassed){
                 std::cout << "\033[0;32m" << " [PASS]\n";
                 std::cout << "\033[0;0m";   // reset color.
@@ -42,6 +37,8 @@ namespace htest
         bool m_bPassed;
     };
 
+    std::vector<Test*> g_oVectTest;
+
     void test()
     {
         std::cout << "Start tests\n";
@@ -49,7 +46,7 @@ namespace htest
         size_t num_tests = 0U;
         size_t num_passed = 0U;
 
-        for(ITest* t : g_oVectTest){
+        for(Test* t : g_oVectTest){
             std::cout << "\033[0;33m" << t->GetTestCaseName() << std::endl;
             std::cout << "\033[0;0m";   // reset color.
             t->SetUp();
