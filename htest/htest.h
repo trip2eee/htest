@@ -14,6 +14,7 @@
 #include <cmath>
 #include <cfloat>
 #include <chrono>
+#include <setjmp.h>
 namespace htest
 {
 #ifdef WIN32
@@ -40,17 +41,19 @@ namespace htest
         CYAN = 36,
         WHITE = 37
     };
-    void SetColor(const TextColor_e eColor){
+    static jmp_buf g_jump_buffer;
+    
+    static void SetColor(const TextColor_e eColor){
         if(bUseColor){
             std::cout << "\033[0;" << eColor << "m";
         }
     }
-    void PrintColorText(const std::string strText, const TextColor_e eColor){
+    static void PrintColorText(const std::string strText, const TextColor_e eColor){
         SetColor(eColor);
         std::cout << strText;
         SetColor(TextColor_e::RESET);
     }
-    std::ostream& NumTests(const size_t num_tests){
+    static std::ostream& NumTests(const size_t num_tests){
         std::cout << num_tests;
         if(num_tests > 1U){
             std::cout << " tests";
@@ -59,30 +62,47 @@ namespace htest
         }
         return std::cout;
     }
-    class OutputStream{
+    class AssertionStream{
     public:
-        OutputStream(const bool bVerbose=true){
-            m_bVerbose = bVerbose;
+        AssertionStream(const bool bVerbose=true, const bool bAbort=false, const bool bChained=false):
+            m_bVerbose(bVerbose), m_bAbort(bAbort), m_bChained(bChained)
+        {            
+        }
+        ~AssertionStream(){
+            if(!m_bChained && m_bAbort){
+                longjmp(g_jump_buffer, -1);
+            }
         }
         template<typename _T>
-        OutputStream operator<<(_T msg){
+        AssertionStream operator<<(_T msg){
             if(m_bVerbose){
                 std::cout << msg;
             }
-            return *this;
+            m_bChained = true;
+            return AssertionStream(m_bVerbose, m_bAbort);
         }
-    private:
+        // for std::endl
+        AssertionStream operator <<(std::ostream& (*os)(std::ostream&)){
+            if(m_bVerbose){
+                std::cout << os;
+            }
+            m_bChained = true;
+            return AssertionStream(m_bVerbose, m_bAbort);
+        }
+    protected:
         bool m_bVerbose;
+        bool m_bAbort;
+        bool m_bChained;    // This flag is set true if this stream is followed by another output message.
     };
 
     class Test
     {
-    public:
+    protected:
         virtual void SetUp(){}
         virtual void TearDown(){}
         virtual void TestBody(){}
-        std::string _get_test_case_name(){return m_strTestCaseName;}
-        bool _is_test_passed(){return m_bPassed;}
+        std::string _get_test_case_name(){return m_strHTestTestCaseName;}
+        bool _is_test_passed(){return m_bHTestPassed;}
         void _print_line(const int line, const char* file){
             std::cout << "At line " << line << " in " << file << std::endl;
         }
@@ -91,76 +111,53 @@ namespace htest
             std::cout << n << " (" << v << ")";
         }
         template<typename _T1, typename _T2>
-        OutputStream _assert_eq(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bTerminate){
+        AssertionStream _assert_eq(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bAbort){
             if(v1 != v2){
-                m_bPassed = false;
+                m_bHTestPassed = false;
                 _print_line(line, file);
-                _print_value(n1, v1); std::cout << " != "; _print_value(n2, v2); std::cout << "\n";
-                if(bTerminate){
-                    PrintColorText(strMarkerFAILED, TextColor_e::RED);
-                    exit(-1);
-                }
-                OutputStream out(true);
-                return out;
+                _print_value(n1, v1); std::cout << " != "; _print_value(n2, v2); std::cout << "\n";                
+                return AssertionStream(true, bAbort);
             }
-            OutputStream out(false);
-            return out;
+            return AssertionStream(false);
         }
 
         template<typename _T1, typename _T2>
-        OutputStream _assert_gt(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bTerminate){
+        AssertionStream _assert_gt(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bAbort){
             if(v1 <= v2){
-                m_bPassed = false;
+                m_bHTestPassed = false;
                 _print_line(line, file);
                 _print_value(n1, v1); std::cout << " <= "; _print_value(n2, v2); std::cout << "\n";
-                if(bTerminate){
-                    PrintColorText(strMarkerFAILED, TextColor_e::RED);
-                    exit(-1);
-                }
-                OutputStream out(true);
-                return out;
-            }
-            OutputStream out(false);
-            return out;
+                return AssertionStream(true, bAbort);
+            }            
+            return AssertionStream(false);
         }
         template<typename _T1, typename _T2>
-        OutputStream _assert_lt(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bTerminate){
+        AssertionStream _assert_lt(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bAbort){
             if(v1 >= v2){
-                m_bPassed = false;
+                m_bHTestPassed = false;
                 _print_line(line, file);
                 _print_value(n1, v1); std::cout << " >= "; _print_value(n2, v2); std::cout << "\n";
-                if(bTerminate){
-                    PrintColorText(strMarkerFAILED, TextColor_e::RED);
-                    exit(-1);
-                }
-                OutputStream out(true);
-                return out;
-            }
-            OutputStream out(false);
-            return out;
+                return AssertionStream(true, bAbort);
+            }            
+            return AssertionStream(false);
         }
         template<typename _T1, typename _T2, typename _T3>
-        OutputStream _assert_near(const int line, const char* file, const char* n1, const char* n2, const char* n3, const _T1 v1, const _T2 v2, const _T3 v3, const bool bTerminate){
+        AssertionStream _assert_near(const int line, const char* file, const char* n1, const char* n2, const char* n3, const _T1 v1, const _T2 v2, const _T3 v3, const bool bAbort){
             if( ((v1 > v2) && (v1 - v2) > v3) || ((v2 > v1) && (v2 - v1) > v3) ) {
-                m_bPassed = false;
+                m_bHTestPassed = false;
                 _print_line(line, file);
                 std::cout << "Diff btw "; _print_value(n1, v1); std::cout << " and "; _print_value(n2, v2); std::cout << " = " << (v1-v2) << " > "; _print_value(n3, v3); std::cout << "\n";
-                if(bTerminate){
-                    PrintColorText(strMarkerFAILED, TextColor_e::RED);
-                    exit(-1);
-                }
-                OutputStream out(true);
-                return out;
+                return AssertionStream(true, bAbort);
             }
-            OutputStream out(false);
-            return out;
+            return AssertionStream(false);
         }
-    protected:
-        std::string m_strTestCaseName;
-        bool m_bPassed;
+
+        friend void test(const int argc, char** argv);
+        std::string m_strHTestTestCaseName;
+        bool m_bHTestPassed;        
     };
-    std::vector<Test*> g_oVectTest; // Test class instance list.
-    void parse_arguments(const int argc, const char* const argv[]){
+    static std::vector<Test*> g_oVectTest; // Test class instance list.
+    static void parse_arguments(const int argc, char** argv){
         for(int i=0;i<argc;i++){
             std::string strArg(argv[i]);
             const std::string argHeader = "--htest_";
@@ -180,7 +177,7 @@ namespace htest
             }
         }
     }
-    void test(const int argc=0, const char* const argv[]=nullptr){
+    inline void test(const int argc=0, char** argv=nullptr){
         parse_arguments(argc, argv);
         const size_t num_tests = g_oVectTest.size();
         PrintColorText(strMarkerInfo, TextColor_e::GREEN);
@@ -196,7 +193,10 @@ namespace htest
 
             const std::chrono::high_resolution_clock::time_point start_test = std::chrono::high_resolution_clock::now();
             t->SetUp();
-            t->TestBody();
+            // if first run, perform test. Otherwise skip the test body because it's jumped from ASSERT_XX().
+            if(setjmp(g_jump_buffer) == 0){
+                t->TestBody();
+            }
             t->TearDown();
             const std::chrono::duration<float> duration_test = std::chrono::high_resolution_clock::now() - start_test;
 
@@ -237,9 +237,11 @@ namespace htest
         class HTEST_CLASS_NAME(test_suite_name, test_name) : public parent_class {                    \
         public:                                                                                       \
             HTEST_CLASS_NAME(test_suite_name, test_name)(){                                           \
-                m_bPassed = true;                                                                     \
+                m_bHTestPassed = true;                                                                \
                 htest::g_oVectTest.push_back(this);                                                   \
-                m_strTestCaseName = #test_suite_name"::"#test_name;                                   \
+                std::cout << htest::g_oVectTest.size() << "\n";\
+                m_strHTestTestCaseName = #test_suite_name"::"#test_name;                              \
+                std::cout << m_strHTestTestCaseName << "\n";\
             }                                                                                         \
             virtual void TestBody() override;                                                         \
         };                                                                                            \

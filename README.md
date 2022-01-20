@@ -1,10 +1,51 @@
 # htest
-htest is a very simple C++ unit test library implemented in a header file.
+htest is a very simple C++ unit test library implemented in a single header file. Therefore you do not need to build or link any library.
 
 You can test your code by just including htest.h.
 
+In addition, htest mimics interfaces of googletest for easier use.
+
+https://github.com/google/googletest
+
 ## QuickStart
+
+### Assertions
+htest provides assertion macros as googletest does. When assertion failes, htest prints the source file and line location at which failure occurred.
+
+The assertion macros are in pairs: ASSERT_*() and EXPECT_*(). They have different behaviour after test. 
+
+ASSERT_*() returns the test immediately without performing further test. On the other hand, EXPECT_*() does not return and execute following test codes.
+
+|Name                   | Description                                                          |
+|-----------------------|----------------------------------------------------------------------|
+| EXPECT_EQ(x, y)       | Test if x and y are equal.                                           |
+| EXPECT_FLOAT_EQ(x, y) | Test if floating point x and y are equal i.e. abs(x-y) < FLT_EPSILON |
+| EXPECT_NEAR(x, y, z)  | Test if x is near to y by z i.e. abs(x-y) < z                        |
+| EXPECT_LT(x, y)       | Test if x is less than y i.e. x < y                                  |
+| EXPECT_RT(x, y)       | Test if x is greater than y i.e. x > y                               |
+
+You may also write custom failure messages same as googletest as below.
+```cxx
+const int x = 10;
+const int y = 10;
+const int z = add(x, y);
+EXPECT_EQ(z, x + y) << " add function failed\n";
+```
+
+
 ### Simple Test
+To create a test:
+
+1. Use TEST() macro to define a test function.
+2. Write a test case.
+3. Use assertions to check values returned from the test case.
+```cxx
+TEST(TestSuiteName, TestCaseName)
+{
+    // Test Body.
+}
+```
+
 ```cxx
 #include "htest/htest.h"
 
@@ -25,30 +66,48 @@ int main()
 }
 ```
 
-### Test with custom TestSuite class
+### Test using Test Fixture
+
+You can use test fixture to reuse test configurations.
+
+To create a fixture:
+
+1. Derive a class from htest::Test. Start its body with protected:.
+2. Declare objects to be used in tests.
+3. If neccessary, override SetUp() method to prepare obects for each test.
+4. If neccessary, override TearDown() method to release resources allocated in SetUp().
+5. If needed, define subroutines for your tests to share.
+6. Write test cases using TEST_F() instead of TEST().
+```cxx
+TEST_F(TestFixtureName, TestName)
+{
+    // Test Body.
+}
+```
+
 ```cxx
 #include "htest/htest.h"
 
-class TestSuite : public htest::Test
+class TestFixture : public htest::Test
 {
 public:
     void SetUp()
     {
-        // Set up code
+        // Initialization code here.
     }
 
     void TearDown()
     {
-        // Tear down code
+        // Release code here.
     }
 };
 
-TEST_F(TestSuite, TestCaseName1)
+TEST_F(TestFixture, TestCaseName1)
 {
     // Run Test
 }
 
-TEST_F(TestSuite, TestCaseName2)
+TEST_F(TestFixture, TestCaseName2)
 {
     // Run Test
 }
@@ -59,10 +118,17 @@ int main()
     return 0;
 }
 ```
+### Command Line Arguments
+In main() function, you may pass command line arguments to test().
 
-### Macros
-1. EXPECT_EQ()
-2. EXPECT_FLOAT_EQ()
-3. EXPECT_NEAR()
-4. EXPECT_LT()
-5. EXPECT_GT()
+
+```cxx
+int main(int argc, char* argv[])
+{
+    htest::test(argc, argv);
+    return 0;
+}
+```
+
+Color print is enabled in Linux by default. However, it's disabled in Windows because windows command prompt does not support this feature. If you run your test in Windows Powershell, you may enable color print by passing argument --htest_color=yes.
+
