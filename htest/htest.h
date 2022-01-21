@@ -239,9 +239,7 @@ namespace htest
             HTEST_CLASS_NAME(test_suite_name, test_name)(){                                           \
                 m_bHTestPassed = true;                                                                \
                 htest::g_oVectTest.push_back(this);                                                   \
-                std::cout << htest::g_oVectTest.size() << "\n";\
                 m_strHTestTestCaseName = #test_suite_name"::"#test_name;                              \
-                std::cout << m_strHTestTestCaseName << "\n";\
             }                                                                                         \
             virtual void TestBody() override;                                                         \
         };                                                                                            \
