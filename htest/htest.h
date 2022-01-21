@@ -22,6 +22,13 @@ namespace htest
 #else
     static bool bUseColor = true;
 #endif
+
+#ifdef HTEST_EXTERN
+#define __htest_decl_global extern
+#else
+#define __htest_decl_global 
+#endif
+
     const std::string strMarkerInfo   = "[============] ";
     const std::string strMarkerRUN    = "[ RUN        ] ";
     const std::string strMarkerOK     = "[         OK ] ";
@@ -41,7 +48,7 @@ namespace htest
         CYAN = 36,
         WHITE = 37
     };
-    static jmp_buf g_jump_buffer;
+    __htest_decl_global jmp_buf g_jump_buffer;
     
     static void SetColor(const TextColor_e eColor){
         if(bUseColor){
@@ -151,12 +158,12 @@ namespace htest
             }
             return AssertionStream(false);
         }
-
         friend void test(const int argc, char** argv);
         std::string m_strHTestTestCaseName;
         bool m_bHTestPassed;        
     };
-    static std::vector<Test*> g_oVectTest; // Test class instance list.
+    
+    __htest_decl_global std::vector<Test*> g_oVectTest; // Test class instance list.
     static void parse_arguments(const int argc, char** argv){
         for(int i=0;i<argc;i++){
             std::string strArg(argv[i]);
@@ -264,6 +271,17 @@ namespace htest
     #define ASSERT_NEAR(x, y, eps) _assert_near(__LINE__, __FILE__, #x, #y, #eps, x, y, eps, true)
     #define ASSERT_LT(x, y)        _assert_lt(__LINE__, __FILE__, #x, #y, x, y, true)
     #define ASSERT_GT(x, y)        _assert_gt(__LINE__, __FILE__, #x, #y, x, y, true)
+    
+    #define HTEST_GLOBAL namespace htest { \
+        jmp_buf g_jump_buffer;             \
+        std::vector<Test*> g_oVectTest;    \
+    }                                      \
+
+    #define HTEST_MAIN int main(int argc, char* argv[]) { \
+        htest::test(argc, argv);                          \
+        return 0;                                         \
+    }                                                     \
+
 }
 #endif
 
