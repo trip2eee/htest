@@ -65,6 +65,9 @@ int main()
     return 0;
 }
 ```
+You can find the simple test example in examples/simple_test.
+
+As described in the example code, main() can be replaced by HTEST_MAIN macro.
 
 ### Test using Test Fixture
 
@@ -118,10 +121,32 @@ int main()
     return 0;
 }
 ```
+
+Test fixture example is in examples/test_fixture.
+
+### Test with Multiple Test Files
+
+The intention of this project is not to build any codes in unit test framework. For multiple test files,  however, there is no other option but build 'htest.cpp' together with test codes.
+
+In addition, HTEST_EXTERN has to be defined before including htest.h to prevent multiple declaration of several internal variables.
+
+Example code for multiple test files can be found in examples/multiple_test_files
+
+```cxx
+#define HTEST_EXTERN
+#include <htest.h>
+
+// Test codes
+
+```
+
+If you build your test files with 'htest.cpp', you must not declare main function because main function is declared in htest.cpp.
+
+
 ### Command Line Arguments
 In main() function, you may pass command line arguments to test().
 
-
+Please note that the following main function can be replaced by HTEST_MAIN macro.
 ```cxx
 int main(int argc, char* argv[])
 {
