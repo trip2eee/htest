@@ -67,6 +67,8 @@ int main()
 ```
 You can find the simple test example in examples/simple_test.
 
+https://github.com/trip2eee/htest/tree/main/examples/simple_test
+
 As described in the example code, main() can be replaced by HTEST_MAIN macro.
 
 ### Test using Test Fixture
@@ -124,6 +126,8 @@ int main()
 
 Test fixture example is in examples/test_fixture.
 
+https://github.com/trip2eee/htest/tree/main/examples/test_fixture
+
 ### Test with Multiple Test Files
 
 The intention of this project is not to build any codes in unit test framework. For multiple test files,  however, there is no other option but build 'htest.cpp' together with test codes.
@@ -131,6 +135,8 @@ The intention of this project is not to build any codes in unit test framework. 
 In addition, HTEST_EXTERN has to be defined before including htest.h to prevent multiple declaration of several internal variables.
 
 Example code for multiple test files can be found in examples/multiple_test_files
+
+https://github.com/trip2eee/htest/tree/main/examples/multiple_test_files
 
 ```cxx
 #define HTEST_EXTERN
