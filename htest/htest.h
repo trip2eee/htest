@@ -104,6 +104,10 @@ namespace htest
 
     class Test
     {
+    public:
+        Test(){
+            m_bHTestPassed = true;
+        }
     protected:
         virtual void SetUp(){}
         virtual void TearDown(){}
@@ -160,7 +164,8 @@ namespace htest
         }
         friend void test(const int argc, char** argv);
         std::string m_strHTestTestCaseName;
-        bool m_bHTestPassed;        
+    private:
+        bool m_bHTestPassed;
     };
     
     __htest_decl_global std::vector<Test*> g_oVectTest; // Test class instance list.
@@ -244,7 +249,6 @@ namespace htest
         class HTEST_CLASS_NAME(test_suite_name, test_name) : public parent_class {                    \
         public:                                                                                       \
             HTEST_CLASS_NAME(test_suite_name, test_name)(){                                           \
-                m_bHTestPassed = true;                                                                \
                 htest::g_oVectTest.push_back(this);                                                   \
                 m_strHTestTestCaseName = #test_suite_name"::"#test_name;                              \
             }                                                                                         \

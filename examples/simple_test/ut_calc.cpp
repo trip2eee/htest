@@ -2,7 +2,7 @@
  * Test of scalar calculation.
 */
 
-#include <htest/htest.h>
+#include <htest.h>
 #include "../test_target/Calc.h"
 
 TEST(TestCalc, add)

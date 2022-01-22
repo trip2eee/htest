@@ -40,7 +40,7 @@ TEST_F(TestVectorCalc, vadd)
     ASSERT_EQ(vx.size(), vz.size()) << "The size of result is different. No further test will be performed.\n";
     for(size_t i = 0U; i < vx.size(); i++)
     {
-        EXPECT_EQ(vz[i], vx[i] + vy[i]);
+        EXPECT_EQ(vz[i], vx[i] + vy[i]) << "Failed at index " << i << std::endl;
     }
 }
 
@@ -51,7 +51,7 @@ TEST_F(TestVectorCalc, vsub)
     ASSERT_EQ(vx.size(), vz.size()) << "The size of result is different. No further test will be performed.\n";
     for(size_t i = 0U; i < vx.size(); i++)
     {
-        EXPECT_EQ(vz[i], vx[i] - vy[i]);
+        EXPECT_EQ(vz[i], vx[i] - vy[i]) << "Failed at index " << i << std::endl;
     }
 }
 
@@ -62,7 +62,7 @@ TEST_F(TestVectorCalc, vmul)
     ASSERT_EQ(vx.size(), vz.size()) << "The size of result is different. No further test will be performed.\n";
     for(size_t i = 0U; i < vx.size(); i++)
     {
-        EXPECT_EQ(vz[i], vx[i] * vy[i]);
+        EXPECT_EQ(vz[i], vx[i] * vy[i]) << "Failed at index " << i << std::endl;
     }
 }
 
@@ -73,7 +73,7 @@ TEST_F(TestVectorCalc, vdiv)
     ASSERT_EQ(vx.size(), vz.size()) << "The size of result is different. No further test will be performed.\n";
     for(size_t i = 0U; i < vx.size(); i++)
     {
-        EXPECT_EQ(vz[i], vx[i] / vy[i]);
+        EXPECT_EQ(vz[i], vx[i] / vy[i]) << "Failed at index " << i << std::endl;
     }
 }
 
