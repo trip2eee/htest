@@ -18,9 +18,9 @@
 namespace htest
 {
 #ifdef WIN32
-    static bool bUseColor = false;
+    static bool g_bUseColor = false;
 #else
-    static bool bUseColor = true;
+    static bool g_bUseColor = true;
 #endif
 
 #ifdef HTEST_EXTERN
@@ -51,7 +51,7 @@ namespace htest
     __htest_decl_global jmp_buf g_jump_buffer;
     
     static void SetColor(const TextColor_e eColor){
-        if(bUseColor){
+        if(g_bUseColor){
             std::cout << "\033[0;" << eColor << "m";
         }
     }
@@ -76,12 +76,13 @@ namespace htest
         {            
         }
         ~AssertionStream(){
+            // if there is no more assertion message and ASSERT_*() macro is called, test is aborted by jumping to the test().
             if(!m_bChained && m_bAbort){
                 longjmp(g_jump_buffer, -1);
             }
         }
         template<typename _T>
-        AssertionStream operator<<(_T msg){
+        AssertionStream operator<<(const _T msg){
             if(m_bVerbose){
                 std::cout << msg;
             }
@@ -96,10 +97,10 @@ namespace htest
             m_bChained = true;
             return AssertionStream(m_bVerbose, m_bAbort);
         }
-    protected:
-        bool m_bVerbose;
-        bool m_bAbort;
-        bool m_bChained;    // This flag is set true if this stream is followed by another output message.
+    private:
+        bool m_bVerbose;    // If this flag is set to true, custom assertion messages are printed. In other words, this flag has to be set to true when the test is failed.
+        bool m_bAbort;      // If this flag is set to true, this class abort test immediately after custom assertion messages are printed.
+        bool m_bChained;    // This flag is set to true if this stream is followed by another output message.
     };
 
     class Test
@@ -118,11 +119,11 @@ namespace htest
             std::cout << "At line " << line << " in " << file << std::endl;
         }
         template<typename _T>
-        void _print_value(const char* n, const _T v){
+        void _print_value(const char* const n, const _T v){
             std::cout << n << " (" << v << ")";
         }
         template<typename _T1, typename _T2>
-        AssertionStream _assert_eq(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bAbort){
+        AssertionStream _assert_eq(const int line, const char* const file, const char* const n1, const char* const n2, const _T1 v1, const _T2 v2, const bool bAbort){
             if(v1 != v2){
                 m_bHTestPassed = false;
                 _print_line(line, file);
@@ -131,9 +132,8 @@ namespace htest
             }
             return AssertionStream(false);
         }
-
         template<typename _T1, typename _T2>
-        AssertionStream _assert_gt(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bAbort){
+        AssertionStream _assert_gt(const int line, const char* const file, const char* const n1, const char* const n2, const _T1 v1, const _T2 v2, const bool bAbort){
             if(v1 <= v2){
                 m_bHTestPassed = false;
                 _print_line(line, file);
@@ -143,7 +143,7 @@ namespace htest
             return AssertionStream(false);
         }
         template<typename _T1, typename _T2>
-        AssertionStream _assert_lt(const int line, const char* file, const char* n1, const char* n2, const _T1 v1, const _T2 v2, const bool bAbort){
+        AssertionStream _assert_lt(const int line, const char* const file, const char* const n1, const char* const n2, const _T1 v1, const _T2 v2, const bool bAbort){
             if(v1 >= v2){
                 m_bHTestPassed = false;
                 _print_line(line, file);
@@ -153,7 +153,7 @@ namespace htest
             return AssertionStream(false);
         }
         template<typename _T1, typename _T2, typename _T3>
-        AssertionStream _assert_near(const int line, const char* file, const char* n1, const char* n2, const char* n3, const _T1 v1, const _T2 v2, const _T3 v3, const bool bAbort){
+        AssertionStream _assert_near(const int line, const char* const file, const char* const n1, const char* const n2, const char* const n3, const _T1 v1, const _T2 v2, const _T3 v3, const bool bAbort){
             if( ((v1 > v2) && (v1 - v2) > v3) || ((v2 > v1) && (v2 - v1) > v3) ) {
                 m_bHTestPassed = false;
                 _print_line(line, file);
@@ -165,24 +165,24 @@ namespace htest
         friend void test(const int argc, char** argv);
         std::string m_strHTestTestCaseName;
     private:
-        bool m_bHTestPassed;
+        bool m_bHTestPassed;    // This flag is set to true at startup. If the test is failed this flag is set to false in _assert_*() functions.
     };
     
     __htest_decl_global std::vector<Test*> g_oVectTest; // Test class instance list.
     static void parse_arguments(const int argc, char** argv){
         for(int i=0;i<argc;i++){
-            std::string strArg(argv[i]);
+            const std::string strArg(argv[i]);
             const std::string argHeader = "--htest_";
             if(strArg.substr(0, argHeader.length()) == argHeader){                    
-                size_t nPosEq = strArg.find("=");
+                const size_t nPosEq = strArg.find("=");
                 if(nPosEq != std::string::npos){
                     const std::string strParam = strArg.substr(argHeader.length(), nPosEq-argHeader.length());
                     const std::string strValue = strArg.substr(nPosEq+1);
                     if("color"==strParam){
                         if("yes"==strValue){
-                            bUseColor=true;
+                            g_bUseColor=true;
                         }else if("no"==strValue){
-                            bUseColor=true;
+                            g_bUseColor=true;
                         }
                     }
                 }
@@ -190,7 +190,7 @@ namespace htest
         }
     }
     inline void test(const int argc=0, char** argv=nullptr){
-        parse_arguments(argc, argv);
+        parse_arguments(argc, argv);        
         const size_t num_tests = g_oVectTest.size();
         PrintColorText(strMarkerInfo, TextColor_e::GREEN);
 
