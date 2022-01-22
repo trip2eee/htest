@@ -3,9 +3,9 @@ htest is a very simple C++ unit test library implemented in a single header file
 
 You can test your code by just including htest.h.
 
-In addition, htest mimics interfaces of googletest for easier use.
+In addition, htest mimics interfaces of [googletest](https://github.com/google/googletest) for easier use.
 
-https://github.com/google/googletest
+<img src="images/htest.png" width="40%">
 
 ## QuickStart
 
