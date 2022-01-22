@@ -136,6 +136,8 @@ In addition, HTEST_EXTERN has to be defined before including htest.h to prevent 
 
 Example code for multiple test files can be found in examples/multiple_test_files
 
+I found link order important in Linux. Unlike MinGW, htest.cpp shall be the first in g++ file list. You can refer to test_calc_all.sh in the following example.
+
 https://github.com/trip2eee/htest/tree/main/examples/multiple_test_files
 
 ```cxx
