@@ -218,7 +218,7 @@ namespace htest
             }else{
                 PrintColorText(strMarkerFAIL, TextColor_e::RED);
             }
-            std::cout << t->_get_test_case_name() << " (" << static_cast<int>(duration_test.count() * 1000.0F) << ")\n";
+            std::cout << t->_get_test_case_name() << " (" << static_cast<int>(duration_test.count() * 1000.0F) << " ms)\n";
         }
         const std::chrono::duration<float> duration_test_suite = std::chrono::high_resolution_clock::now() - start_test_suite;
 
